@@ -1,0 +1,7 @@
+{
+  "name": "Stratix AI - Call Operator",
+  "description": "A professional AI-powered call center operator interface featuring real-time voice interaction, transcription, and call management using Gemini Live API.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
