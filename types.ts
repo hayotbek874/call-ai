@@ -16,6 +16,13 @@ export interface RecordedCall {
   blobUrl?: string; // Only valid for current session
 }
 
+export interface Contact {
+  id: string;
+  name: string;
+  phone: string;
+  addedAt: string;
+}
+
 export enum CallStatus {
   IDLE = 'IDLE',
   CONNECTING = 'CONNECTING',
