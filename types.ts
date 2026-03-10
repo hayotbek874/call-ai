@@ -13,7 +13,11 @@ export interface RecordedCall {
   language: string;
   transcriptionCount: number;
   fileName: string;
-  blobUrl?: string; // Only valid for current session
+  summary?: string;
+  sentiment?: 'positive' | 'neutral' | 'negative';
+  actionItems?: string[];
+  followUpDraft?: string;
+  transcription?: { sender: 'user' | 'ai', text: string }[];
 }
 
 export interface Contact {
