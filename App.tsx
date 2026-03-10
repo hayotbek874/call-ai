@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, Modality, LiveServerMessage, Type } from '@google/genai';
 import { CallStatus, LanguageOption, RecordedCall } from './types';
@@ -45,7 +44,7 @@ const LANGUAGES: LanguageOption[] = [
 Стиль общения: теплый, дружелюбный, как живой человек.
 Правила: Ташкент 39к, Регионы 49к. Оплата при получении. 
 Если клиент перебивает - замолчите и слушайте. 
-В конце каждого ответа задавайте вопрос.` },
+В конце каждого ответа задавайте вопрос.` }
 ];
 
 const VOICES = [
@@ -94,6 +93,12 @@ const App: React.FC = () => {
   const combinedAudioBufferRef = useRef<Float32Array[]>([]);
   const recordingDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const recordingProcessorRef = useRef<ScriptProcessorNode | null>(null);
+
+  useEffect(() => {
+    if (!process.env.GEMINI_API_KEY) {
+      setCallError('An API key must be set when running in a browser');
+    }
+  }, []);
 
   useEffect(() => {
     isOnHoldRef.current = isOnHold;
@@ -173,7 +178,7 @@ const App: React.FC = () => {
   const generateSummary = async (transcription: { sender: 'user' | 'ai', text: string }[]) => {
     if (transcription.length === 0) return null;
     
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
     const prompt = `
       Siz professional tahlilchisiz. Quyidagi telefon muloqoti matni asosida chuqur tahlil o'tkazing.
       
@@ -222,7 +227,6 @@ const App: React.FC = () => {
     if (sessionRef.current) sessionRef.current.close?.();
     if (micStreamRef.current) micStreamRef.current.getTracks().forEach(t => t.stop());
     
-    // Stop recording processor
     if (recordingProcessorRef.current) {
       recordingProcessorRef.current.disconnect();
       recordingProcessorRef.current = null;
@@ -246,7 +250,6 @@ const App: React.FC = () => {
       setIsProcessing(true);
       const id = Date.now().toString();
       
-      // Create WAV blob from combined buffer (mixed mic + AI)
       const finalBlob = createWavBlob(combinedAudioBufferRef.current, 24000);
       await saveAudioBlob(id, finalBlob);
       
@@ -275,23 +278,34 @@ const App: React.FC = () => {
   };
 
   const startCall = async () => {
-    if (!dialNumber && status === CallStatus.IDLE) return;
+    if ((!dialNumber && status === CallStatus.IDLE) || !process.env.GEMINI_API_KEY) return;
     setCallError(null);
+    
     try {
       setStatus(CallStatus.CONNECTING);
       playSound.ring(); 
       combinedAudioBufferRef.current = [];
-      
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      
+
+      // 1. Get microphone permission first, as it's a user gesture
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        micStreamRef.current = stream;
+      } catch (err) {
+        throw new Error("Mikrofonga ruxsat berilmadi. Iltimos, mikrofon sozlamalarini tekshiring.");
+      }
+
+      // 2. Now, initialize audio contexts after getting permission
       try {
         audioContextInRef.current = new AudioContext({ sampleRate: 16000 });
         audioContextOutRef.current = new AudioContext({ sampleRate: 24000 });
         
-        // Setup recording destination
+        // Connect mic to recording destination for mixed audio
+        const micSource = audioContextOutRef.current.createMediaStreamSource(stream);
         recordingDestRef.current = audioContextOutRef.current.createMediaStreamDestination();
+        micSource.connect(recordingDestRef.current);
         
-        // Setup manual buffer capture for WAV
+        // Setup a script processor to capture the mixed audio stream for WAV export
         recordingProcessorRef.current = audioContextOutRef.current.createScriptProcessor(4096, 1, 1);
         recordingProcessorRef.current.onaudioprocess = (e) => {
           if (statusRef.current === CallStatus.ACTIVE || statusRef.current === CallStatus.CONNECTING) {
@@ -301,23 +315,13 @@ const App: React.FC = () => {
         };
         recordingDestRef.current.connect(recordingProcessorRef.current);
         recordingProcessorRef.current.connect(audioContextOutRef.current.destination);
+
       } catch (err) {
-        throw new Error("Audio tizimini ishga tushirib bo'lmadi. Iltimos, brauzeringizni tekshiring.");
+        stream.getTracks().forEach(track => track.stop()); // Clean up stream
+        throw new Error("Audio tizimini ishga tushirib bo\'lmadi. Iltimos, brauzeringizni tekshiring.");
       }
 
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        micStreamRef.current = stream;
-        
-        // Connect mic to recording destination
-        if (audioContextOutRef.current && recordingDestRef.current) {
-          const micSource = audioContextOutRef.current.createMediaStreamSource(stream);
-          micSource.connect(recordingDestRef.current);
-        }
-      } catch (err) {
-        throw new Error("Mikrofonga ruxsat berilmadi. Iltimos, mikrofon sozlamalarini tekshiring.");
-      }
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
       const sessionPromise = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
@@ -347,7 +351,6 @@ const App: React.FC = () => {
                   setUserSpeaking(true);
                   setIsThinking(false);
                   
-                  // Barge-in: Stop AI speaking if user starts talking
                   if (isSpeaking) {
                     sourcesRef.current.forEach(s => { try { s.stop(); } catch (e) {} });
                     sourcesRef.current.clear();
@@ -458,7 +461,7 @@ const App: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-[#050914] text-white font-sans overflow-hidden flex items-center justify-center p-2 sm:p-4">
-      <div className="relative w-full max-w-[320px] h-full max-h-[660px] bg-[#070b18] rounded-[48px] border-[1px] border-white/5 shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-sm h-full max-h-[700px] bg-[#070b18] rounded-[48px] border-[1px] border-white/5 shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
         
         {isProcessing && (
           <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
@@ -514,9 +517,9 @@ const App: React.FC = () => {
                         setDialNumber(d => d + item.n); 
                         if (callError) setCallError(null);
                       }} 
-                      className="w-[66px] h-[66px] rounded-full bg-[#131b31]/40 border border-white/5 flex flex-col items-center justify-center active:bg-[#1a2542] transition-all shadow-inner shadow-white/5 mx-auto"
+                      className="w-16 h-16 rounded-full bg-[#131b31]/40 border border-white/5 flex flex-col items-center justify-center active:bg-[#1a2542] transition-all shadow-inner shadow-white/5 mx-auto"
                     >
-                      <span className="text-[24px] font-medium leading-none mb-0.5">{item.n}</span>
+                      <span className="text-2xl font-medium leading-none mb-0.5">{item.n}</span>
                       <span className="text-[6px] font-black opacity-40 tracking-widest uppercase">{item.l}</span>
                     </button>
                   ))}
