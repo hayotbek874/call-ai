@@ -1,0 +1,4 @@
+firebase-functions
+firebase-admin
+Flask
+retailcrm==5.3.0

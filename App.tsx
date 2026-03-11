@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, Modality, LiveServerMessage, Type } from '@google/genai';
 import { CallStatus, LanguageOption, RecordedCall } from './types';
@@ -7,34 +8,34 @@ import { saveAudioBlob, getAudioBlob, deleteAudioBlob } from './utils/db';
 
 const ZARGARSHOP_PROMPT = `
 Sening isming: Zargar Shop AI Operatori.
-Sening vazifang: "Zargar Shop" telemagazini va onlayn-do'koni mijozlariga xizmat ko'rsatish.
+Sening vazifang: "Zargar Shop" telemagazini va onlayn-do\'koni mijozlariga xizmat ko\'rsatish.
 
-MULOQOT USLUBI VA INSONIYLIK (O'TA MUHIM):
-- Sen shunchaki robot emassan, sen samimiy, jonli va yordamga tayyor insonga o'xshash operator bo'lishing kerak.
-- Gaplaringda tabiiy to'xtalishlar, "hmm", "tushunarli", "ha, albatta", "shunaqa deng", "ha-ya", "albatta-da" kabi so'zlardan o'rinli foydalanib, muloqotni jonli qil.
-- Gapni juda rasmiy boshlama. O'zbekona mehmondostlik va samimiylik bilan gaplash.
-- Mijoz gapirayotganda diqqat bilan tingla. Agar mijoz seni bo'lsa, darhol to'xta va uni tingla (Barge-in).
-- Ovoz ohanging iliq, xushmuomala va ishonarli bo'lsin. Xuddi yaqin do'sting bilan gaplashayotgandek samimiy bo'l.
-- Mijozning kayfiyatiga qarab moslash: agar u xursand bo'lsa, sen ham ko'tarinki ruhda bo'l; agar u norozi bo'lsa, hamdardlik bildirib, muammoni hal qilishga intil.
-- Qisqa javoblar berishga harakat qil, monolog o'qima. Mijoz bilan doimiy muloqotda bo'l.
+MULOQOT USLUBI VA INSONIYLIK (O\'TA MUHIM):
+- Sen shunchaki robot emassan, sen samimiy, jonli va yordamga tayyor insonga o\'xshash operator bo\'lishing kerak.
+- Gaplaringda tabiiy to\'xtalishlar, "hmm", "tushunarli", "ha, albatta", "shunaqa deng", "ha-ya", "albatta-da" kabi so\'zlardan o\'rinli foydalanib, muloqotni jonli qil.
+- Gapni juda rasmiy boshlama. O\'zbekona mehmondostlik va samimiylik bilan gaplash.
+- Mijoz gapirayotganda diqqat bilan tingla. Agar mijoz seni bo\'lsa, darhol to\'xta va uni tingla (Barge-in).
+- Ovoz ohanging iliq, xushmuomala va ishonarli bo\'lsin. Xuddi yaqin do\'sting bilan gaplashayotgandek samimiy bo\'l.
+- Mijozning kayfiyatiga qarab moslash: agar u xursand bo\'lsa, sen ham ko\'tarinki ruhda bo\'l; agar u norozi bo\'lsa, hamdardlik bildirib, muammoni hal qilishga intil.
+- Qisqa javoblar berishga harakat qil, monolog o\'qima. Mijoz bilan doimiy muloqotda bo\'l.
 
-QUYIDAGI QOIDALAR VA MA'LUMOTLAR ASOSIDA JAVOB BER:
+QUYIDAGI QOIDALAR VA MA\'LUMOTLAR ASOSIDA JAVOB BER:
 
 1. SALOMLASHUV: "Assalomu alaykum! Siz bilan “Zargar Shop” bog‘lanmoqda. Qanday mahsulot sizga qiziq?" deb boshla. Ovozda tabassum sezilib tursin.
-2. BUYURTMA: Mijoz biror narsa olmoqchi bo'lsa, har doim LOT RAQAMINI so'ra (u rasmning yuqori qismida bo'ladi).
-3. LOT RAQAMI AYTILSA: "Juda ajoyib tanlov! Bu nafis mahsulot yuqori sifatli qoplama bilan ishlangan. Buyurtmani rasmiylashtirish uchun ma’lumotlaringizni qabul qilsam bo‘ladimi?" deb so'ra.
+2. BUYURTMA: Mijoz biror narsa olmoqchi bo\'lsa, har doim LOT RAQAMINI so\'ra (u rasmning yuqori qismida bo\'ladi).
+3. LOT RAQAMI AYTILSA: "Juda ajoyib tanlov! Bu nafis mahsulot yuqori sifatli qoplama bilan ishlangan. Buyurtmani rasmiylashtirish uchun ma’lumotlaringizni qabul qilsam bo‘ladimi?" deb so\'ra.
 4. YETKAZIB BERISH NARXI: 
    - Toshkent shahriga: 39 000 so‘m (1 kunda yetkaziladi).
    - Viloyatlarga: 49 000 so‘m (3–5 ish kunida yetkaziladi).
-5. DO'KON HAQIDA: Biz onlayn tele-magazinmiz, jismoniy do'konimiz yo'q, faqat yetkazib berish orqali ishlaymiz.
+5. DO\'KON HAQIDA: Biz onlayn tele-magazinmiz, jismoniy do\'konimiz yo\'q, faqat yetkazib berish orqali ishlaymiz.
 6. MAHSULOT SIFATI: 585 probali sifatli pozoleta (oltin suvi) bilan qoplangan. To‘g‘ri foydalanilsa, uzoq vaqt o‘z ko‘rinishini saqlaydi.
-7. TO'LOV: Buyurtmani qabul qilganda (eshik tagida) to'lash mumkin.
+7. TO\'LOV: Buyurtmani qabul qilganda (eshik tagida) to\'lash mumkin.
 8. CHEGIRMALAR: Hozirda mahsulotlarga chegirma borligini va hozir buyurtma qilsa bonus borligini ayt.
-9. BUYURTMANI RASMIYLASHTIRISH: Mijoz rozi bo'lsa, Familiya, Ism va To'liq manzilini so'ra.
-10. TUSHUNARSIZ HOLAT: Agar mijoz savolini tushunmasang, "Kechirasiz, yaxshi tushunmadim. So‘rovingizni qayd etib qo'ydim, mutaxassisimiz yaqin vaqt ichida siz bilan bog‘lanib, batafsil tushuntiradi" deb ayt.
-11. XAYRLASHUV: "Murojaatingiz uchun katta rahmat! Kuningiz xayrli o'tsin. Agar yana savollar tug'ilsa, bemalol murojaat qiling" deb tugat.
+9. BUYURTMANI RASMIYLASHTIRISH: Mijoz rozi bo\'lsa, Familiya, Ism va To\'liq manzilini so\'ra.
+10. TUSHUNARSIZ HOLAT: Agar mijoz savolini tushunmasang, "Kechirasiz, yaxshi tushunmadim. So‘rovingizni qayd etib qo\'ydim, mutaxassisimiz yaqin vaqt ichida siz bilan bog‘lanib, batafsil tushuntiradi" deb ayt.
+11. XAYRLASHUV: "Murojaatingiz uchun katta rahmat! Kuningiz xayrli o\'tsin. Agar yana savollar tug\'ilsa, bemalol murojaat qiling" deb tugat.
 
-Har bir javobing oxirida mijozga savol berib muloqotni davom ettir. Standart narxni 139,000 so'm deb hisobla.
+Har bir javobing oxirida mijozga savol berib muloqotni davom ettir. Standart narxni 139,000 so\'m deb hisobla.
 `;
 
 const LANGUAGES: LanguageOption[] = [
@@ -180,10 +181,13 @@ const App: React.FC = () => {
     
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
     const prompt = `
-      Siz professional tahlilchisiz. Quyidagi telefon muloqoti matni asosida chuqur tahlil o'tkazing.
+      Siz "Zargar Shop" do\'koni uchun CRM ma\'lumotlarini to\'ldiruvchi professional tahlilchisiz. 
+      Quyidagi telefon muloqoti matni asosida ma\'lumotlarni aniq va strukturaviy JSON formatida ajratib oling.
       
       Muloqot matni:
       ${transcription.map(t => `${t.sender === 'user' ? 'Mijoz' : 'Operator'}: ${t.text}`).join('\n')}
+
+      Agar biron bir ma\'lumot mavjud bo\'lmasa, maydonni bo\'sh (\`""\` yoki \`[]\`) qoldiring.
     `;
     
     try {
@@ -195,16 +199,31 @@ const App: React.FC = () => {
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              summary: { type: Type.STRING, description: "Muloqotning qisqa va lo'nda xulosasi (o'zbek tilida)" },
-              sentiment: { type: Type.STRING, enum: ["positive", "neutral", "negative"], description: "Mijozning umumiy kayfiyati" },
-              actionItems: { 
-                type: Type.ARRAY, 
-                items: { type: Type.STRING },
-                description: "Keyingi qadamlar yoki bajarilishi kerak bo'lgan vazifalar"
+              summary: { type: Type.STRING, description: "Muloqotning qisqa va lo\'nda xulosasi (o\'zbek tilida, 2-3 gap)." },
+              sentiment: { type: Type.STRING, enum: ["positive", "neutral", "negative"], description: "Mijozning umumiy kayfiyati." },
+              customer: {
+                type: Type.OBJECT,
+                description: "Mijoz haqida ma\'lumotlar.",
+                properties: {
+                  name: { type: Type.STRING, description: "Mijozning to\'liq ismi (agar aytgan bo\'lsa)." },
+                  address: { type: Type.STRING, description: "Mijozning to\'liq yetkazib berish manzili (shahar, tuman, ko\'cha, uy)." }
+                }
               },
-              followUpDraft: { type: Type.STRING, description: "Mijozga yuborish uchun SMS yoki Telegram xabari loyihasi" }
+              items: { 
+                type: Type.ARRAY, 
+                description: "Buyurtma qilingan mahsulotlar ro\'yxati.",
+                items: { 
+                  type: Type.OBJECT,
+                  properties: {
+                    lotNumber: { type: Type.STRING, description: "Mahsulotning lot raqami." },
+                    name: { type: Type.STRING, description: "Mahsulotning nomi (taxminiy, agar aytilsa)." },
+                    quantity: { type: Type.NUMBER, description: "Mahsulot soni." }
+                  }
+                },
+              },
+              followUpDraft: { type: Type.STRING, description: "Mijozga yuborish uchun SMS yoki Telegram xabari loyihasi (buyurtma tasdiqlansa yoki qo\'shimcha ma\'lumot kerak bo\'lsa)." }
             },
-            required: ["summary", "sentiment", "actionItems", "followUpDraft"]
+            required: ["summary", "sentiment", "customer", "items", "followUpDraft"]
           }
         }
       });
@@ -223,59 +242,106 @@ const App: React.FC = () => {
     const finalLang = selectedLang.label;
     const finalTranscriptCount = transcriptionCount;
     const finalFullTranscription = [...fullTranscription];
+    const callId = Date.now().toString(); // Generate unique ID for the call
 
+    // --- Stop all processes ---
     if (sessionRef.current) sessionRef.current.close?.();
     if (micStreamRef.current) micStreamRef.current.getTracks().forEach(t => t.stop());
-    
     if (recordingProcessorRef.current) {
       recordingProcessorRef.current.disconnect();
       recordingProcessorRef.current = null;
     }
-
     sourcesRef.current.forEach(s => { try { s.stop(); } catch (e) {} });
     sourcesRef.current.clear();
     nextStartTimeRef.current = 0;
+    playSound.disconnect();
+
+    // --- Reset State ---
     setIsSpeaking(false);
     setUserSpeaking(false);
     setIsThinking(false);
     setIsOnHold(false);
-    playSound.disconnect();
     setStatus(CallStatus.IDLE);
     setDialNumber('');
     setCallDuration(0);
     setTranscriptionCount(0);
     setFullTranscription([]);
 
+    // --- Process and Save Data ---
     if (combinedAudioBufferRef.current.length > 0) {
       setIsProcessing(true);
-      const id = Date.now().toString();
       
       const finalBlob = createWavBlob(combinedAudioBufferRef.current, 24000);
-      await saveAudioBlob(id, finalBlob);
+      await saveAudioBlob(callId, finalBlob);
       
+      // Generate structured analysis from the transcription
       const analysis = await generateSummary(finalFullTranscription);
       
+      // --- Send data to Backend for CRM ---
+      if (analysis) {
+        try {
+          // We don\'t have a public URL for the recording, so we send an empty string
+          const recordingUrl = ""; 
+          
+          const response = await fetch('/api/v1/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: finalDialNumber || "Unknown",
+              product_lot: analysis.items && analysis.items.length > 0 ? analysis.items[0].lotNumber : "Unknown",
+              product_name: analysis.items && analysis.items.length > 0 ? analysis.items[0].name || "Mahsulot" : "Mahsulot",
+              quantity: analysis.items && analysis.items.length > 0 ? analysis.items[0].quantity : 1,
+              amount: 139000,
+              delivery_cost: analysis.customer && analysis.customer.address && analysis.customer.address.toLowerCase().includes('toshkent') ? 39000 : 49000,
+              total: 139000 + (analysis.customer && analysis.customer.address && analysis.customer.address.toLowerCase().includes('toshkent') ? 39000 : 49000),
+              channel: "voice-web",
+              address: analysis.customer ? analysis.customer.address : "",
+              payment_method: "cash"
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Backend error:', errorData);
+            // Optionally, show an error to the user
+          } else {
+            const result = await response.json();
+            console.log('Backend response:', result);
+          }
+
+        } catch (error) {
+          console.error('Failed to send data to backend:', error);
+        }
+      }
+
+      // --- Save to local history ---
       const newEntry: RecordedCall = {
-        id,
+        id: callId,
         timestamp: new Date().toLocaleString(),
         duration: finalDuration,
         language: finalLang,
         transcriptionCount: finalTranscriptCount,
-        fileName: `ZargarShop_${finalDialNumber || 'AI'}_${id}.wav`,
+        fileName: `ZargarShop_${finalDialNumber || 'AI'}_${callId}.wav`,
         summary: analysis?.summary || "Summary unavailable",
         sentiment: analysis?.sentiment,
-        actionItems: analysis?.actionItems,
+        actionItems: [], // Action items are now part of the CRM logic
         followUpDraft: analysis?.followUpDraft,
-        transcription: finalFullTranscription
+        transcription: finalFullTranscription,
+        crmData: { // Store the structured data locally as well
+          customer: analysis?.customer,
+          items: analysis?.items
+        }
       };
       
       const updatedHistory = [newEntry, ...recordings];
       setRecordings(updatedHistory);
       localStorage.setItem('call_history', JSON.stringify(updatedHistory));
+      
       combinedAudioBufferRef.current = [];
       setIsProcessing(false);
     }
   };
+
 
   const startCall = async () => {
     if ((!dialNumber && status === CallStatus.IDLE) || !process.env.GEMINI_API_KEY) return;
@@ -286,7 +352,7 @@ const App: React.FC = () => {
       playSound.ring(); 
       combinedAudioBufferRef.current = [];
 
-      // 1. Get microphone permission first, as it's a user gesture
+      // 1. Get microphone permission first, as it\'s a user gesture
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -472,7 +538,7 @@ const App: React.FC = () => {
             </div>
             <h3 className="text-sm font-black text-[#34e0a1] uppercase tracking-[0.2em] mb-2">Processing Call</h3>
             <p className="text-[10px] text-zinc-400 leading-relaxed">
-              Gemini is analyzing your conversation to generate a concise summary and action items...
+              Gemini is analyzing your conversation and sending data to the CRM...
             </p>
           </div>
         )}
@@ -750,17 +816,20 @@ const App: React.FC = () => {
                             {rec.summary}
                           </div>
                           
-                          {rec.actionItems && rec.actionItems.length > 0 && (
+                          {rec.crmData && (rec.crmData.items?.length || 0) > 0 && (
                             <div className="mb-3">
-                              <p className="text-[7px] font-black text-white/40 uppercase mb-1.5">Action Items</p>
-                              <ul className="space-y-1">
-                                {rec.actionItems.map((item, idx) => (
-                                  <li key={idx} className="text-[9px] text-zinc-400 flex items-start">
-                                    <span className="text-[#34e0a1] mr-1.5">•</span>
-                                    {item}
-                                  </li>
-                                ))}
-                              </ul>
+                              <p className="text-[7px] font-black text-white/40 uppercase mb-1.5">CRM Order Data</p>
+                               <div className="text-[9px] text-zinc-400 space-y-1">
+                                <p><span className='font-bold text-zinc-300'>Mijoz:</span> {rec.crmData.customer?.name || 'N/A'}</p>
+                                <p><span className='font-bold text-zinc-300'>Manzil:</span> {rec.crmData.customer?.address || 'N/A'}</p>
+                                <div><span className='font-bold text-zinc-300'>Mahsulotlar:</span>
+                                  <ul className='list-disc pl-4'>
+                                  {rec.crmData.items?.map((item, idx) => (
+                                    <li key={idx}>Lot: {item.lotNumber}, {item.name} - {item.quantity} dona</li>
+                                  ))}
+                                  </ul>
+                                </div>
+                              </div>
                             </div>
                           )}
 

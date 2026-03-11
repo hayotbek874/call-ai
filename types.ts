@@ -18,6 +18,10 @@ export interface RecordedCall {
   actionItems?: string[];
   followUpDraft?: string;
   transcription?: { sender: 'user' | 'ai', text: string }[];
+  crmData?: {
+    customer?: { name?: string; address?: string };
+    items?: { lotNumber?: string; name?: string; quantity?: number }[];
+  };
 }
 
 export interface Contact {
