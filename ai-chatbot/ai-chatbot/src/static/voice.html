@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZargarShop — Voice Call</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2e3345;
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --accent: #00cec9;
+            --text: #e4e6ef;
+            --muted: #8b8fa3;
+            --danger: #ff6b6b;
+            --success: #51cf66;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            width: 100%;
+            padding: 16px 24px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .header span {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .call-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        /* ── Call button ────────────────────── */
+        .call-btn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            background: var(--success);
+            color: #fff;
+            font-size: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 0 0 rgba(81, 207, 102, 0.4);
+        }
+
+        .call-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .call-btn.active {
+            background: var(--danger);
+            box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4);
+            animation: pulse-ring 1.5s ease infinite;
+        }
+
+        .call-btn.recording {
+            background: var(--primary);
+            box-shadow: 0 0 0 0 rgba(108, 92, 231, 0.4);
+            animation: pulse-ring 1s ease infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 currentColor;
+            }
+
+            70% {
+                box-shadow: 0 0 0 20px transparent;
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 transparent;
+            }
+        }
+
+        .status-text {
+            font-size: 16px;
+            color: var(--muted);
+            text-align: center;
+            min-height: 24px;
+        }
+
+        /* ── Speak button ──────────────────── */
+        .speak-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--surface);
+            color: var(--primary-light);
+            font-size: 32px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .speak-btn:active,
+        .speak-btn.pressed {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .speak-btn.visible {
+            display: flex;
+        }
+
+        /* ── Chat log ──────────────────────── */
+        .chat-log {
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px 0;
+        }
+
+        .chat-msg {
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+
+        .chat-msg.user {
+            background: var(--primary);
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-msg.bot {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-msg.system {
+            align-self: center;
+            color: var(--muted);
+            font-size: 12px;
+            background: none;
+        }
+
+        /* ── Language selector ─────────────── */
+        .lang-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .lang-btn {
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .timer {
+            font-size: 28px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--accent);
+            min-height: 36px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>💎 ZargarShop Voice</h1>
+        <span>AI Voice Assistant — Demo</span>
+    </div>
+
+    <div class="call-container">
+        <div class="lang-row">
+            <button class="lang-btn active" data-lang="ru">🇷🇺 Русский</button>
+            <button class="lang-btn" data-lang="uz">🇺🇿 O'zbek</button>
+        </div>
+
+        <div class="timer" id="timer"></div>
+
+        <button class="call-btn" id="callBtn" title="Start call">📞</button>
+        <div class="status-text" id="status">Tap to start a call</div>
+
+        <button class="speak-btn" id="speakBtn" title="Hold to speak">🎤</button>
+
+        <div class="chat-log" id="chatLog"></div>
+    </div>
+
+    <script>
+        const WS_URL = `ws://${location.host}/api/v1/voice/call`;
+        let ws = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let callActive = false;
+        let language = 'ru';
+        let timerInterval = null;
+        let startTime = 0;
+
+        // Audio playback
+        let audioQueue = [];
+        let isPlaying = false;
+        let currentAudioCtx = null;
+
+        const callBtn = document.getElementById('callBtn');
+        const speakBtn = document.getElementById('speakBtn');
+        const status = document.getElementById('status');
+        const chatLog = document.getElementById('chatLog');
+        const timer = document.getElementById('timer');
+
+        // ── Language toggle ────────────────────────────────────
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                language = btn.dataset.lang;
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'config', language }));
+                }
+            });
+        });
+
+        // ── Call button ────────────────────────────────────────
+        callBtn.addEventListener('click', () => {
+            if (!callActive) startCall();
+            else endCall();
+        });
+
+        function startCall() {
+            callActive = true;
+            callBtn.classList.add('active');
+            callBtn.textContent = '📕';
+            speakBtn.classList.add('visible');
+            status.textContent = 'Connecting...';
+            chatLog.innerHTML = '';
+            audioQueue = [];
+
+            // Timer
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+            timer.textContent = '00:00';
+
+            // WebSocket
+            ws = new WebSocket(WS_URL);
+            ws.binaryType = 'arraybuffer';
+
+            ws.onopen = () => {
+                status.textContent = language === 'ru'
+                    ? 'Удерживайте 🎤 чтобы говорить'
+                    : '🎤 ni bosib turing — gapiring';
+                ws.send(JSON.stringify({ type: 'config', phone: 'web-demo', language }));
+                addMsg('system', language === 'ru' ? '📞 Звонок начался' : '📞 Qo\'ng\'iroq boshlandi');
+            };
+
+            ws.onmessage = (e) => {
+                if (typeof e.data === 'string') {
+                    const msg = JSON.parse(e.data);
+                    if (msg.type === 'transcript' && msg.text) {
+                        addMsg('user', msg.text);
+                    } else if (msg.type === 'response') {
+                        addMsg('bot', msg.text);
+                        status.textContent = '🔊 Speaking...';
+                    } else if (msg.type === 'tts_done') {
+                        playQueuedAudio();
+                        status.textContent = language === 'ru'
+                            ? 'Удерживайте 🎤 чтобы говорить'
+                            : '🎤 ni bosib turing — gapiring';
+                    } else if (msg.type === 'error') {
+                        addMsg('system', '⚠️ ' + msg.detail);
+                        status.textContent = 'Error — try again';
+                    }
+                } else {
+                    // Binary = TTS MP3 chunk
+                    audioQueue.push(e.data);
+                }
+            };
+
+            ws.onclose = () => {
+                if (callActive) endCall();
+            };
+
+            ws.onerror = () => {
+                status.textContent = 'Connection failed';
+            };
+        }
+
+        function endCall() {
+            callActive = false;
+            callBtn.classList.remove('active');
+            callBtn.textContent = '📞';
+            speakBtn.classList.remove('visible');
+            status.textContent = 'Tap to start a call';
+            clearInterval(timerInterval);
+
+            if (ws) { ws.close(); ws = null; }
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+            addMsg('system', language === 'ru' ? '📕 Звонок завершён' : '📕 Qo\'ng\'iroq tugadi');
+        }
+
+        // ── Hold-to-speak ──────────────────────────────────────
+        speakBtn.addEventListener('mousedown', startRecording);
+        speakBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); });
+        speakBtn.addEventListener('mouseup', stopRecording);
+        speakBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); });
+        speakBtn.addEventListener('mouseleave', stopRecording);
+
+        async function startRecording() {
+            if (!callActive || !ws || ws.readyState !== WebSocket.OPEN) return;
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioChunks = [];
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+                mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+                mediaRecorder.onstop = sendAudio;
+                mediaRecorder.start();
+                speakBtn.classList.add('pressed');
+                callBtn.classList.add('recording');
+                status.textContent = '🎙️ Listening...';
+            } catch (err) {
+                status.textContent = 'Microphone access denied';
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            }
+            speakBtn.classList.remove('pressed');
+            callBtn.classList.remove('recording');
+        }
+
+        async function sendAudio() {
+            if (audioChunks.length === 0 || !ws || ws.readyState !== WebSocket.OPEN) return;
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            if (blob.size < 1000) return; // too short
+            status.textContent = '🤔 Processing...';
+            const buffer = await blob.arrayBuffer();
+            ws.send(buffer);
+        }
+
+        // ── Audio playback ─────────────────────────────────────
+        function playQueuedAudio() {
+            if (audioQueue.length === 0) return;
+            const combined = new Blob(audioQueue.map(b => new Uint8Array(b)), { type: 'audio/mp3' });
+            audioQueue = [];
+            const url = URL.createObjectURL(combined);
+            const audio = new Audio(url);
+            audio.onended = () => URL.revokeObjectURL(url);
+            audio.play().catch(() => { });
+        }
+
+        // ── Helpers ────────────────────────────────────────────
+        function addMsg(type, text) {
+            const div = document.createElement('div');
+            div.className = 'chat-msg ' + type;
+            div.textContent = text;
+            chatLog.appendChild(div);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function updateTimer() {
+            const s = Math.floor((Date.now() - startTime) / 1000);
+            const m = String(Math.floor(s / 60)).padStart(2, '0');
+            const sec = String(s % 60).padStart(2, '0');
+            timer.textContent = `${m}:${sec}`;
+        }
+    </script>
+</body>
+
+</html>

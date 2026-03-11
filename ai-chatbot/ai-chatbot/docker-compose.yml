@@ -1,0 +1,118 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "${PORT:-8000}:8000"
+      - "9099:9099"
+    volumes:
+      - .:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - POSTGRES_URL=postgresql+asyncpg://stratix:stratix@postgres:5432/stratix
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    restart: always
+    networks:
+      - stratix-net
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - POSTGRES_URL=postgresql+asyncpg://stratix:stratix@postgres:5432/stratix
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    restart: always
+    networks:
+      - stratix-net
+
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.telegram
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - POSTGRES_URL=postgresql+asyncpg://stratix:stratix@postgres:5432/stratix
+      - REDIS_URL=redis://redis:6379/0
+    restart: always
+    networks:
+      - stratix-net
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: stratix
+      POSTGRES_USER: stratix
+      POSTGRES_PASSWORD: stratix
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stratix -d stratix"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stratix-net
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stratix-net
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - stratix-net
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  stratix-net:
+    driver: bridge

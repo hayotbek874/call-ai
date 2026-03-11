@@ -1,0 +1,58 @@
+FROM python:3.13-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONFAULTHANDLER=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    build-essential \
+    libpq-dev \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd --gid 1000 appgroup && \
+    useradd --uid 1000 --gid appgroup --shell /bin/bash --create-home appuser
+
+WORKDIR /app
+
+FROM base AS development
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PATH="/app/.venv/bin:$PATH" \
+    VIRTUAL_ENV="/app/.venv"
+
+COPY pyproject.toml uv.lock* ./
+
+RUN uv venv /app/.venv
+
+COPY . .
+
+RUN uv pip install .
+
+RUN chown -R appuser:appgroup /app
+USER appuser
+
+CMD ["python", "-m", "celery", "-A", "src.workers.celery_app", "worker", "--loglevel=info"]
+
+FROM base AS production
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PATH="/app/.venv/bin:$PATH" \
+    VIRTUAL_ENV="/app/.venv"
+
+COPY pyproject.toml uv.lock* ./
+COPY src ./src
+
+RUN uv venv /app/.venv && uv pip install .
+
+RUN mkdir -p /app/logs && chown -R appuser:appgroup /app
+USER appuser
+
+CMD ["python", "-m", "celery", "-A", "src.workers.celery_app", "worker", "--loglevel=warning", "--concurrency=4"]

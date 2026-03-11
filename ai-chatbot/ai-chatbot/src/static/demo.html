@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STRATIX AI — Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface2: #242836;
+            --border: #2e3345;
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --accent: #00cec9;
+            --text: #e4e6ef;
+            --text-muted: #8b8fa3;
+            --user-bg: #6c5ce7;
+            --bot-bg: #242836;
+            --danger: #ff6b6b;
+            --success: #51cf66;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── HEADER ───────────────────────────── */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .brand h1 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .brand span {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .4;
+            }
+        }
+
+        .status-text {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ── MAIN LAYOUT ──────────────────────── */
+        .main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ── SIDEBAR ──────────────────────────── */
+        .sidebar {
+            width: 300px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .channel-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .channel-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            transition: all .2s;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .channel-btn:hover {
+            background: var(--surface2);
+        }
+
+        .channel-btn.active {
+            background: rgba(108, 92, 231, .15);
+            border-color: var(--primary);
+            color: var(--primary-light);
+        }
+
+        .channel-icon {
+            font-size: 20px;
+        }
+
+        .channel-info {
+            text-align: left;
+        }
+
+        .channel-info .name {
+            font-weight: 500;
+        }
+
+        .channel-info .desc {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Settings panel */
+        .settings {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .setting-row label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        select,
+        input[type=text] {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+        }
+
+        select:focus,
+        input[type=text]:focus {
+            border-color: var(--primary);
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .stat-card {
+            background: var(--surface2);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .stat-card .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary-light);
+        }
+
+        .stat-card .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Quick actions */
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .quick-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+            transition: .2s;
+        }
+
+        .quick-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+
+        /* ── CHAT AREA ────────────────────────── */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bot-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .bot-info .name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .bot-info .typing {
+            font-size: 12px;
+            color: var(--accent);
+            display: none;
+        }
+
+        .bot-info .typing.show {
+            display: block;
+        }
+
+        .clear-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            transition: .2s;
+        }
+
+        .clear-btn:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        /* Messages */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            max-width: 70%;
+            animation: fadeIn .3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+        }
+
+        .msg-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .message.bot .msg-avatar {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+        }
+
+        .message.user .msg-avatar {
+            background: var(--surface2);
+        }
+
+        .msg-content {
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message.bot .msg-content {
+            background: var(--bot-bg);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.user .msg-content {
+            background: var(--user-bg);
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-time {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            display: block;
+        }
+
+        .message.user .msg-time {
+            text-align: right;
+        }
+
+        /* Welcome message */
+        .welcome {
+            text-align: center;
+            padding: 60px 40px;
+            color: var(--text-muted);
+        }
+
+        .welcome .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .welcome h2 {
+            font-size: 20px;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .welcome p {
+            font-size: 14px;
+            max-width: 400px;
+            margin: 0 auto 20px;
+        }
+
+        /* Input area */
+        .input-area {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        #msgInput {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            padding: 14px 16px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            resize: none;
+            min-height: 48px;
+            max-height: 120px;
+            transition: border-color .2s;
+        }
+
+        #msgInput:focus {
+            border-color: var(--primary);
+        }
+
+        #msgInput::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: none;
+            background: var(--primary);
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: .2s;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            background: var(--primary-light);
+        }
+
+        .send-btn:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+
+        /* ── RESPONSIVE ───────────────────────── */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">S</div>
+            <div class="brand">
+                <h1>STRATIX AI</h1>
+                <span>Multi-Channel AI Chatbot — Demo</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-dot"></div>
+            <span class="status-text">All services online</span>
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+
+            <div>
+                <h3>Channel</h3>
+                <div class="channel-list">
+                    <button class="channel-btn active" data-channel="web">
+                        <span class="channel-icon">💬</span>
+                        <div class="channel-info">
+                            <div class="name">Web Chat</div>
+                            <div class="desc">Live web widget</div>
+                        </div>
+                    </button>
+                    <button class="channel-btn" data-channel="phone">
+                        <span class="channel-icon">📞</span>
+                        <div class="channel-info">
+                            <div class="name">Phone (Asterisk)</div>
+                            <div class="desc">Voice AI via SIP</div>
+                        </div>
+                    </button>
+                    <button class="channel-btn" data-channel="telegram">
+                        <span class="channel-icon">✈️</span>
+                        <div class="channel-info">
+                            <div class="name">Telegram</div>
+                            <div class="desc">Bot integration</div>
+                        </div>
+                    </button>
+                    <button class="channel-btn" data-channel="instagram">
+                        <span class="channel-icon">📸</span>
+                        <div class="channel-info">
+                            <div class="name">Instagram DM</div>
+                            <div class="desc">Meta Messenger API</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <h3>Settings</h3>
+                <div class="settings">
+                    <div class="setting-row">
+                        <label>Language</label>
+                        <span style="font-size:13px;color:var(--accent);">Auto-detect ✨</span>
+                    </div>
+                    <div class="setting-row">
+                        <label>Demo Phone</label>
+                        <input type="text" id="phoneInput" value="+998901234567" style="width:150px">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3>Session Stats</h3>
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="value" id="msgCount">0</div>
+                        <div class="label">Messages</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="avgLatency">—</div>
+                        <div class="label">Avg latency</div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3>Quick Phrases</h3>
+                <div class="quick-actions" id="quickPhrases"></div>
+            </div>
+
+        </div>
+
+        <!-- CHAT -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <div class="chat-header-left">
+                    <div class="bot-avatar">🤖</div>
+                    <div class="bot-info">
+                        <div class="name">ZargarShop AI</div>
+                        <div class="typing" id="typingIndicator">typing…</div>
+                    </div>
+                </div>
+                <button class="clear-btn" onclick="clearChat()">Clear chat</button>
+            </div>
+
+            <div class="messages" id="messages">
+                <div class="welcome" id="welcomeMsg">
+                    <div class="icon">💎</div>
+                    <h2>Welcome to STRATIX AI Demo</h2>
+                    <p>This is a live AI chatbot for ZargarShop — a jewelry teleshopping platform.
+                        Try asking about products, prices, delivery, or placing an order.</p>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea id="msgInput" rows="1" placeholder="Type a message…"
+                        onkeydown="handleKey(event)"></textarea>
+                </div>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let channel = 'web';
+        let latencies = [];
+        let totalMessages = 0;
+        let isStreaming = false;
+
+        /* ── Quick phrases (both languages) ──── */
+        const PHRASES = [
+            "Здравствуйте!",
+            "Assalomu alaykum!",
+            "Покажите лот KL234",
+            "KL234 lotni ko'rsating",
+            "Сколько стоит доставка?",
+            "Yetkazib berish narxi qancha?",
+            "Есть скидка?",
+            "Chegirma bormi?",
+            "Хочу оформить заказ",
+            "Buyurtma bermoqchiman",
+            "Hello, what rings do you have?",
+        ];
+
+        function renderPhrases() {
+            const container = document.getElementById('quickPhrases');
+            container.innerHTML = '';
+            PHRASES.forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = 'quick-btn';
+                btn.textContent = p;
+                btn.onclick = () => {
+                    document.getElementById('msgInput').value = p;
+                    sendMessage();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        renderPhrases();
+
+        /* ── Channel buttons ────────────────────── */
+        document.querySelectorAll('.channel-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.channel-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                channel = btn.dataset.channel;
+            });
+        });
+
+        /* ── Auto-resize textarea ───────────────── */
+        const msgInput = document.getElementById('msgInput');
+        msgInput.addEventListener('input', () => {
+            msgInput.style.height = 'auto';
+            msgInput.style.height = Math.min(msgInput.scrollHeight, 120) + 'px';
+        });
+
+        function handleKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        /* ── Time helper ────────────────────────── */
+        function timeStr() {
+            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        /* ── Add message to chat ────────────────── */
+        function addMessage(role, text) {
+            const welcome = document.getElementById('welcomeMsg');
+            if (welcome) welcome.remove();
+
+            const wrap = document.createElement('div');
+            wrap.className = `message ${role}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'msg-avatar';
+            avatar.textContent = role === 'bot' ? '🤖' : '👤';
+
+            const content = document.createElement('div');
+            const bubble = document.createElement('div');
+            bubble.className = 'msg-content';
+            bubble.textContent = text;
+            const time = document.createElement('span');
+            time.className = 'msg-time';
+            time.textContent = timeStr();
+            content.appendChild(bubble);
+            content.appendChild(time);
+
+            wrap.appendChild(avatar);
+            wrap.appendChild(content);
+
+            document.getElementById('messages').appendChild(wrap);
+            scrollBottom();
+            return bubble;
+        }
+
+        function scrollBottom() {
+            const m = document.getElementById('messages');
+            m.scrollTop = m.scrollHeight;
+        }
+
+        /* ── Stats ──────────────────────────────── */
+        function updateStats(latencyMs) {
+            totalMessages++;
+            document.getElementById('msgCount').textContent = totalMessages;
+            if (latencyMs !== undefined) {
+                latencies.push(latencyMs);
+                const avg = Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length);
+                document.getElementById('avgLatency').textContent = avg + 'ms';
+            }
+        }
+
+        /* ── Send message ───────────────────────── */
+        async function sendMessage() {
+            if (isStreaming) return;
+            const input = document.getElementById('msgInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            input.style.height = 'auto';
+            addMessage('user', text);
+            updateStats();
+
+            const phone = document.getElementById('phoneInput').value;
+
+            isStreaming = true;
+            document.getElementById('sendBtn').disabled = true;
+            document.getElementById('typingIndicator').classList.add('show');
+
+            const bubble = addMessage('bot', '');
+            const startTime = performance.now();
+            let firstToken = true;
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/v1/chat/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, message: text, channel }),
+                });
+
+                const reader = resp.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (line.startsWith('data:')) {
+                            const data = line.slice(5);
+                            if (data === '[DONE]') continue;
+                            if (firstToken) {
+                                updateStats(Math.round(performance.now() - startTime));
+                                firstToken = false;
+                            }
+                            bubble.textContent += data;
+                            scrollBottom();
+                        }
+                    }
+                }
+            } catch (err) {
+                bubble.textContent = '⚠ Connection error: ' + err.message;
+                bubble.style.color = 'var(--danger)';
+            }
+
+            document.getElementById('typingIndicator').classList.remove('show');
+            document.getElementById('sendBtn').disabled = false;
+            isStreaming = false;
+        }
+
+        /* ── Clear chat ─────────────────────────── */
+        function clearChat() {
+            const m = document.getElementById('messages');
+            m.innerHTML = `
+    <div class="welcome" id="welcomeMsg">
+      <div class="icon">💎</div>
+      <h2>Welcome to STRATIX AI Demo</h2>
+      <p>This is a live AI chatbot for ZargarShop — a jewelry teleshopping platform.
+         Try asking about products, prices, delivery, or placing an order.</p>
+    </div>`;
+            totalMessages = 0;
+            latencies = [];
+            document.getElementById('msgCount').textContent = '0';
+            document.getElementById('avgLatency').textContent = '—';
+        }
+    </script>
+</body>
+
+</html>
