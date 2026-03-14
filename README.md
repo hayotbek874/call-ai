@@ -49,21 +49,38 @@ This project is a Vite + React web client for AI voice calls.
    npm run preview
    ```
 
-## 3) Deploy to real server (Nginx + Docker)
+## 3) Deploy to real server (Docker + Nginx)
 
-This repo now includes a production Dockerfile that serves `dist/` via Nginx.
+This repo includes a production `Dockerfile` and `deploy/nginx/default.conf`.
 
-### Build image
+### Option A — Manual deploy
+
 ```bash
 docker build -t stratix-call-operator:latest .
-```
-
-### Run container
-```bash
 docker run -d --name stratix-call-operator -p 8080:80 stratix-call-operator:latest
 ```
 
 Then open: `http://<server-ip>:8080`
+
+### Option B — Remote deploy script (recommended)
+
+A ready script is provided at `scripts/deploy_remote.sh`.
+
+```bash
+REMOTE_HOST=198.163.207.194 \
+REMOTE_USER=uz-user \
+REMOTE_PASSWORD='your-password' \
+VITE_GEMINI_API_KEY='your-gemini-key' \
+VITE_API_BASE_URL='https://api.your-domain.uz' \
+REMOTE_PORT=8080 \
+./scripts/deploy_remote.sh
+```
+
+The script will:
+- create a clean deployment bundle,
+- upload it to the remote host,
+- build Docker image on the server,
+- restart container `stratix-call-operator`.
 
 ## 4) Environment variables
 
