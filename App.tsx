@@ -6,6 +6,9 @@ import { encode, decode, decodeAudioData } from './utils/audio-helpers';
 import { playSound } from './utils/sound-effects';
 import { saveAudioBlob, getAudioBlob, deleteAudioBlob } from './utils/db';
 
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
 const ZARGARSHOP_PROMPT = `
 Sening isming: Zargar Shop AI Operatori.
 Sening vazifang: "Zargar Shop" telemagazini va onlayn-do\'koni mijozlariga xizmat ko\'rsatish.
@@ -96,7 +99,7 @@ const App: React.FC = () => {
   const recordingProcessorRef = useRef<ScriptProcessorNode | null>(null);
 
   useEffect(() => {
-    if (!process.env.GEMINI_API_KEY) {
+    if (!GEMINI_API_KEY) {
       setCallError('An API key must be set when running in a browser');
     }
   }, []);
@@ -179,7 +182,7 @@ const App: React.FC = () => {
   const generateSummary = async (transcription: { sender: 'user' | 'ai', text: string }[]) => {
     if (transcription.length === 0) return null;
     
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
+    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY as string });
     const prompt = `
       Siz "Zargar Shop" do\'koni uchun CRM ma\'lumotlarini to\'ldiruvchi professional tahlilchisiz. 
       Quyidagi telefon muloqoti matni asosida ma\'lumotlarni aniq va strukturaviy JSON formatida ajratib oling.
@@ -283,7 +286,7 @@ const App: React.FC = () => {
           // We don\'t have a public URL for the recording, so we send an empty string
           const recordingUrl = ""; 
           
-          const response = await fetch('/api/v1/orders', {
+          const response = await fetch(`${API_BASE_URL}/api/v1/orders`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -344,7 +347,7 @@ const App: React.FC = () => {
 
 
   const startCall = async () => {
-    if ((!dialNumber && status === CallStatus.IDLE) || !process.env.GEMINI_API_KEY) return;
+    if ((!dialNumber && status === CallStatus.IDLE) || !GEMINI_API_KEY) return;
     setCallError(null);
     
     try {
@@ -387,7 +390,7 @@ const App: React.FC = () => {
         throw new Error("Audio tizimini ishga tushirib bo\'lmadi. Iltimos, brauzeringizni tekshiring.");
       }
 
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
+      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY as string });
 
       const sessionPromise = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',

@@ -5,22 +5,30 @@ import basicSsl from '@vitejs/plugin-basic-ssl';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    const useHttps = env.VITE_DEV_HTTPS === 'true';
+    const apiProxyTarget = env.VITE_DEV_API_PROXY_TARGET;
+
     return {
       server: {
         port: 3000,
         host: '0.0.0.0',
         strictPort: true,
         cors: true,
-        allowedHosts: true // Changed 'all' to true
+        allowedHosts: true,
+        proxy: apiProxyTarget
+          ? {
+              '/api': {
+                target: apiProxyTarget,
+                changeOrigin: true,
+                secure: false,
+              },
+            }
+          : undefined,
       },
       plugins: [
         react(),
-        basicSsl() // Bu HTTPS ishlab chiqadi, mikrofon IDX da ishlashi uchun
-      ],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
+        useHttps ? basicSsl() : null,
+      ].filter(Boolean),
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),

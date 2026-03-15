@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.gitignore
+.vscode
+*.log
+.env
+.env.local
+.env.*.local
+ai-chatbot/ai-chatbot/.venv
+**/__pycache__
